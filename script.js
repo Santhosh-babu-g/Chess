@@ -263,28 +263,39 @@ class Pawn extends Piece{
     }
 }
 
+function renderSquare(square, posX, posY){
+    let squareDiv = document.createElement("div");
+    squareDiv.classList.add("square", square.isDark?"dark":"light");
+    if (square.piece_type !== undefined && square.piece_color !== undefined){
+        squareDiv.classList.add(square.piece_color+"_"+square.piece_type);
+    }else if (square.piece){
+        squareDiv.classList.add(square.piece.getClassName());
+    }
+    squareDiv.id = posX+"_"+posY;
+    squareDiv.onclick = clickSquare;
+    return squareDiv;
+}
 
-
-function renderBoard(board) {
+function renderBoard(board,isReverse) {
     let boardDiv = document.getElementById("board");
     boardDiv.innerHTML = "";
     let squares = board.squares;
-    for (let x = squares.length - 1; x >= 0; x--) {
-        let row = squares[x];
-        for (let y = 0; y < row.length; y++) {
-            let square = row[y];
-            let squareDiv = document.createElement("div");
-            squareDiv.classList.add("square", square.isDark?"dark":"light");
-            if (square.piece_type !== undefined && square.piece_color !== undefined){
-                squareDiv.classList.add(square.piece_color+"_"+square.piece_type);
-            }else if (square.piece){
-                squareDiv.classList.add(square.piece.getClassName());
+    if (!isReverse){
+        for (let x = dimension - 1; x >= 0; x--) {
+            let row = squares[x];
+            for (let y = 0; y < row.length; y++) {
+                boardDiv.append(renderSquare(row[y], x, y));
             }
-            squareDiv.id = x+"_"+y;
-            squareDiv.onclick = clickSquare;
-            boardDiv.append(squareDiv);
+        }
+    }else { 
+        for (let x = 0; x < dimension; x++) {
+            let row = squares[x];
+            for (let y = 0; y < row.length; y++) {
+                boardDiv.append(renderSquare(row[y], x, y));
+            }
         }
     }
+    
 }
 
 var squareClicked = false;
@@ -329,7 +340,7 @@ function clickSquare(event){
 
 function initBoard(){
     board = new Board();
-    renderBoard(board);
+    renderBoard(board,true);
 }
 
 var board;
