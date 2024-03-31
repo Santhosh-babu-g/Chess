@@ -1,0 +1,70 @@
+*{
+    box-sizing: border-box;
+}
+body{
+    background-color: aqua;
+}
+.board-container{
+    
+}
+.board{
+    display: grid;
+    height: 696px;
+    width: 696px;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+}
+.dark{
+    background-color: rgb(118, 150, 86);;
+}
+.light{
+    background-color: #EEEED2;
+}
+.square{
+    background-size: contain;
+}
+.dark_rook{
+    background-image: url(images/dark/rook.png);
+}
+.dark_knight{
+    background-image: url(images/dark/knight.png);
+}
+.dark_bishop{
+    background-image: url(images/dark/bishop.png);
+}
+.dark_queen{
+    background-image: url(images/dark/queen.png);
+}
+.dark_king{
+    background-image: url(images/dark/king.png);
+}
+.dark_pawn{
+    background-image: url(images/dark/pawn.png);
+}
+
+.light_rook{
+    background-image: url(images/light/rook.png);
+}
+.light_knight{
+    background-image: url(images/light/knight.png);
+}
+.light_bishop{
+    background-image: url(images/light/bishop.png);
+}
+.light_queen{
+    background-image: url(images/light/queen.png);
+}
+.light_king{
+    background-image: url(images/light/king.png);
+}
+.light_pawn{
+    background-image: url(images/light/pawn.png);
+}
+
+.dark.active{
+    background-color: #b9ca42;
+}
+
+.light.active{
+    background-color: #f5f580;
+}
