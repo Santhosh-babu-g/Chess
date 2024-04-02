@@ -17,7 +17,7 @@ class Board {
                     piece_type = Pawn;
                     piece_color = color;
                 }
-                let square = new Square(x , y, piece_type, piece_color);
+                let square = new Square(x , y, undefined, piece_type, piece_color);
                 row.push(square);
             }
             squares.push(row);
@@ -31,10 +31,12 @@ class Square {
     piece;
     piece_type;
     piece_color;
-    constructor(posX, posY, piece_type, piece_color){
+    constructor(posX, posY, piece, piece_type, piece_color){
         this.isDark = posX % 2 == posY % 2;
-        if (piece_type !== undefined){
+        if (!piece && piece_type !== undefined){
             this.piece = new piece_type(posX, posY, piece_color);
+        }else if (piece){
+            this.piece = piece;
         }
     }
 }
@@ -51,12 +53,18 @@ class Piece {
         this.posY = posY;
     }
 
+    setPosition(posX, posY){
+        this.posX = posX;
+        this.posY = posY;
+        this.movedSteps++;
+    }
+
     appendToPositions(x, y){
         let square = board.squares[x][y];
         if (square?.piece?.color===this.color){
             return false;
         }
-        this.positions.push([x,y]);
+        this.positions.push(x+"_"+y);
         if (square.piece) {
             return false;
         }
@@ -100,9 +108,9 @@ class Knight extends Piece{
     get_possible_moves(){
         this.positions = [];
         for (let x = this.posX - 2; x <= this.posX + 2; x++){
-            if (x > 0 && x < dimension && x !== this.posX){
+            if (x >= 0 && x < dimension && x !== this.posX){
                 for (let y = this.posY - 2; y <= this.posY + 2; y++){
-                    if (y > 0 && y < dimension && y !== this.posY){
+                    if (y >= 0 && y < dimension && y !== this.posY){
                         if (Math.abs(this.posX - x) !== Math.abs(this.posY - y)){
                             this.appendToPositions(x, y);
                         }
@@ -232,32 +240,40 @@ class Pawn extends Piece{
         let count = this.movedSteps === 0 ? 2 : 1;
         for (let i = 1; i <= count; i++){
             if (this.color === "dark" && x - i >= 0){
-                this.appendToPositions(x - i, y);
+                this.appendStraightPosition(x - i, y);
             }else if (this.color === "light" && x + 1 < dimension){
-                this.appendToPositions(x + i, y);
+                this.appendStraightPosition(x + i, y);
             }
         }
 
         if (this.color === "dark" && x - 1 >= 0){
             if (y - 1 >= 0){
-                this.appendOppPawnPosition(x - 1, y - 1);
+                this.appendCrossPosition(x - 1, y - 1);
             }
             if (y + 1 < dimension){
-                this.appendOppPawnPosition(x - 1, y + 1);
+                this.appendCrossPosition(x - 1, y + 1);
             }
         }else if (this.color === "light" && x + 1 < dimension){
             if (y - 1 >= 0){
-                this.appendOppPawnPosition(x + 1, y - 1);
+                this.appendCrossPosition(x + 1, y - 1);
             }
             if (y + 1 < dimension){
-                this.appendOppPawnPosition(x + 1, y + 1);
+                this.appendCrossPosition(x + 1, y + 1);
             }
         }
         return this.positions;
     }
 
-    appendOppPawnPosition(x, y) {
-        if (board.squares[x][y]?.piece?.color !== this.color){
+    appendCrossPosition(x, y) {
+        let square = board.squares[x][y];
+        if (square.piece && square.piece.color !== this.color){
+            this.appendToPositions(x, y);
+        }
+    }
+
+    appendStraightPosition(x,y){
+        let square = board.squares[x][y];
+        if (!square.piece){
             this.appendToPositions(x, y);
         }
     }
@@ -276,7 +292,7 @@ function renderSquare(square, posX, posY){
     return squareDiv;
 }
 
-function renderBoard(board,isReverse) {
+function renderBoard(isReverse) {
     let boardDiv = document.getElementById("board");
     boardDiv.innerHTML = "";
     let squares = board.squares;
@@ -290,12 +306,72 @@ function renderBoard(board,isReverse) {
     }else { 
         for (let x = 0; x < dimension; x++) {
             let row = squares[x];
-            for (let y = 0; y < row.length; y++) {
+            for (let y = dimension - 1; y >= 0; y--) {
                 boardDiv.append(renderSquare(row[y], x, y));
             }
         }
     }
     
+}
+
+function evaluatePossiblePositions(event) {
+    let squareDiv = event.target;
+    if (previous_click === squareDiv.id){
+        previous_click = undefined;
+        possible_positions = undefined;
+        piece_movable = false;
+        squareClicked = false;
+        return;
+    }
+    let [posX, posY] = squareDiv.id.split("_");
+    var square = board.squares[Number(posX)][Number(posY)];
+    if (square.piece !== undefined){
+        squareDiv.classList.add("active");
+        previous_click = squareDiv.id;
+        squareClicked = true;
+        possible_positions = square.piece.get_possible_moves();
+        if (possible_positions && possible_positions.length>0){
+            piece_movable = true;
+            possible_positions.forEach(pos => {
+                let [posX,posY] = pos.split("_");
+                let pos_square = board.squares[posX][posY];
+                let className = pos_square.piece ? "circle-div" : "center-div";
+                let highlightDiv = document.createElement("div");
+                highlightDiv.classList.add(className);
+                document.getElementById(pos).append(highlightDiv);
+            });
+        }
+    }
+}
+
+function cancelMove(event) {
+    document.getElementById(previous_click).classList.remove("active");
+    possible_positions.forEach(pos => {
+        let posSquareDiv = document.getElementById(pos).querySelector("div");
+        if (posSquareDiv){
+            posSquareDiv.remove();
+        }
+    });
+    possible_positions = undefined;
+    previous_click = undefined;
+    piece_movable = false;
+    squareClicked = false;
+    return;
+}
+
+function movePiece(event) {
+    let squareDiv = event.target;
+    let current_position = squareDiv.id;
+    if (possible_positions.includes(current_position)){
+        let [preX, preY] = previous_click.split("_");
+        let [posX, posY] = current_position.split("_");
+        let temp = board.squares[preX][preY].piece;
+        temp.setPosition(Number(posX), Number(posY));
+        board.squares[preX][preY] = new Square(Number(preX), Number(preY));
+        board.squares[posX][posY] = new Square(Number(posX), Number(posY), temp);
+        renderBoard();
+    }
+    cancelMove();
 }
 
 var squareClicked = false;
@@ -304,43 +380,15 @@ var piece_movable = false;
 var possible_positions;
 function clickSquare(event){
     if (!squareClicked){
-        let squareDiv = event.target;
-        if (previous_click === squareDiv.id){
-            previous_click = undefined;
-            possible_positions = undefined;
-            squareClicked = false;
-            return;
-        }
-        let [posX, posY] = squareDiv.id.split("_");
-        var square = board.squares[Number(posX)][Number(posY)];
-        if (square.piece !== undefined){
-            previous_click = squareDiv.id;
-            squareClicked = true;
-            possible_positions = square.piece.get_possible_moves();
-            console.log(possible_positions);
-            possible_positions.forEach(pos => {
-                document.getElementById(pos[0]+"_"+pos[1]).classList.add("active");
-            });
-            if (possible_positions && possible_positions.length>0){
-                piece_movable = true;
-            }
-        }
+        evaluatePossiblePositions(event)
     }else if(piece_movable){
-        let squareDiv = event.target;
-        let current_position = squareDiv.id;
-        if (previous_click === current_position || possible_positions.includes(current_position)){
-            possible_positions = undefined;
-            piece_movable = false;
-            squareClicked = false;
-            return;
-        }
-        debugger;
+        movePiece(event);
     }
 }
 
 function initBoard(){
     board = new Board();
-    renderBoard(board,true);
+    renderBoard(true);
 }
 
 var board;
