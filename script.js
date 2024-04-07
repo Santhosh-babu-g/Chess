@@ -35,6 +35,9 @@ class Square {
         this.isDark = posX % 2 == posY % 2;
         if (!piece && piece_type !== undefined){
             this.piece = new piece_type(posX, posY, piece_color);
+            if (this.piece instanceof King){
+                king_position[piece_color === "light" ? 0 : 1] = posX+"_"+posY;
+            }
         }else if (piece){
             this.piece = piece;
         }
@@ -58,10 +61,13 @@ class Piece {
         this.posY = posY;
         this.movedSteps++;
     }
+    setPossiblePositions(positions){ 
+        this.positions = positions;
+    }
 
-    appendToPositions(x, y){
+    appendToPositions(x, y, isAttack){
         let square = board.squares[x][y];
-        if (square?.piece?.color===this.color){
+        if ((square.piece && square.piece.color===this.color) || (square.piece && square.piece.color!==this.color && square.piece instanceof King && !isAttack)){
             return false;
         }
         this.positions.push(x+"_"+y);
@@ -77,23 +83,23 @@ class Rook extends Piece{
         return this.color+"_rook";
     }
 
-    get_possible_moves(){
+    get_possible_moves(isAttack){
         this.positions = [];
         let x = this.posX;
         let y = this.posY;
         let occupied = [false,false,false,false];
         for (let i = 1; i < dimension; i++) {
             if (!occupied[0] && x - i >= 0){
-                occupied[0] = !this.appendToPositions(x - i, y);
+                occupied[0] = !this.appendToPositions(x - i, y, isAttack);
             }
             if (!occupied[1] && x + i < dimension){
-                occupied[1] = !this.appendToPositions(x + i, y);
+                occupied[1] = !this.appendToPositions(x + i, y, isAttack);
             }
             if (!occupied[2] && y - i >= 0){
-                occupied[2] = !this.appendToPositions(x, y - i);
+                occupied[2] = !this.appendToPositions(x, y - i, isAttack);
             }
             if (!occupied[3] && y + i < dimension){
-                occupied[3] = !this.appendToPositions(x, y + i);
+                occupied[3] = !this.appendToPositions(x, y + i, isAttack);
             }
         }
         return this.positions;
@@ -105,14 +111,14 @@ class Knight extends Piece{
         return this.color+"_knight";
     }
 
-    get_possible_moves(){
+    get_possible_moves(isAttack){
         this.positions = [];
         for (let x = this.posX - 2; x <= this.posX + 2; x++){
             if (x >= 0 && x < dimension && x !== this.posX){
                 for (let y = this.posY - 2; y <= this.posY + 2; y++){
                     if (y >= 0 && y < dimension && y !== this.posY){
                         if (Math.abs(this.posX - x) !== Math.abs(this.posY - y)){
-                            this.appendToPositions(x, y);
+                            this.appendToPositions(x, y, isAttack);
                         }
                     }
                 }
@@ -127,23 +133,23 @@ class Bishop extends Piece{
         return this.color+"_bishop";
     }
 
-    get_possible_moves(){
+    get_possible_moves(isAttack){
         this.positions = [];
         let x = this.posX;
         let y = this.posY;
         let occupied = [false,false,false,false];
         for (let i = 1; i <= dimension; i++) {
             if (!occupied[0] && y + i < dimension && x + i < dimension){
-                occupied[0] = !this.appendToPositions(x + i, y + i);
+                occupied[0] = !this.appendToPositions(x + i, y + i, isAttack);
             }
             if (!occupied[1] && y - i >= 0 && x - i >= 0){
-                occupied[1] = !this.appendToPositions(x - i, y - i);
+                occupied[1] = !this.appendToPositions(x - i, y - i, isAttack);
             }
             if (!occupied[2] && x + i < dimension && y - i >= 0){
-                occupied[2] = !this.appendToPositions(x + i, y - i);
+                occupied[2] = !this.appendToPositions(x + i, y - i, isAttack);
             }
             if (!occupied[3] && y + i < dimension && x - i >= 0){
-                occupied[3] = !this.appendToPositions(x - i, y + i);
+                occupied[3] = !this.appendToPositions(x - i, y + i, isAttack);
             }
         }
         return this.positions;
@@ -155,35 +161,35 @@ class Queen extends Piece{
         return this.color+"_queen";
     }
 
-    get_possible_moves(){
+    get_possible_moves(isAttack){
         this.positions = [];
         let x = this.posX;
         let y = this.posY;
         let occupied = [false,false,false,false,false,false,false,false];
         for (let i = 1; i < dimension; i++) {
             if (!occupied[0] && x - i >= 0){
-                occupied[0] = !this.appendToPositions(x - i, y);
+                occupied[0] = !this.appendToPositions(x - i, y, isAttack);
             }
             if (!occupied[1] && x + i < dimension){
-                occupied[1] = !this.appendToPositions(x + i, y);
+                occupied[1] = !this.appendToPositions(x + i, y, isAttack);
             }
             if (!occupied[2] && y - i >= 0){
-                occupied[2] = !this.appendToPositions(x, y - i);
+                occupied[2] = !this.appendToPositions(x, y - i, isAttack);
             }
             if (!occupied[3] && y + i < dimension){
-                occupied[3] = !this.appendToPositions(x, y + i);
+                occupied[3] = !this.appendToPositions(x, y + i, isAttack);
             }
             if (!occupied[4] && y + i < dimension && x + i < dimension){
-                occupied[4] = !this.appendToPositions(x + i, y + i);
+                occupied[4] = !this.appendToPositions(x + i, y + i, isAttack);
             }
             if (!occupied[5] && y - i >= 0 && x - i >= 0){
-                occupied[5] = !this.appendToPositions(x - i, y - i);
+                occupied[5] = !this.appendToPositions(x - i, y - i, isAttack);
             }
             if (!occupied[6] && x + i < dimension && y - i >= 0){
-                occupied[6] = !this.appendToPositions(x + i, y - i);
+                occupied[6] = !this.appendToPositions(x + i, y - i, isAttack);
             }
             if (!occupied[7] && y + i < dimension && x - i >= 0){
-                occupied[7] = !this.appendToPositions(x - i, y + i);
+                occupied[7] = !this.appendToPositions(x - i, y + i, isAttack);
             }
         }
         return this.positions;
@@ -191,39 +197,234 @@ class Queen extends Piece{
 }
 
 class King extends Piece{
+    valid;
+    blocking_directions;
     getClassName(){
         return this.color+"_king";
     }
 
-    get_possible_moves(){
+    isBlockingPosition(x, y){
+        let square = board.squares[x][y];
+        if (square.piece && square.piece.color === this.color){
+            return false;
+        }
+        if (square.piece){
+            return true;
+        }
+        return x+"_"+y;
+    }
+
+    moveFromValidToPositions(){
+        let $this = this;
+        $this.valid.forEach(function(pos) {
+            $this.positions.push(pos);
+        })
+        $this.valid = [];
+    }
+
+    addToValid(x,y){
+        this.valid.push(x + "_" + y);
+    }
+
+    getBlockingPositions(){
+        this.blocking_directions = 0;
+        this.positions = [];
+        this.valid = [];
+        let x = this.posX;
+        let y = this.posY;
+        for (let i = 1; i < dimension; i++) {
+            if (x - i >= 0){
+                let isBlocking = this.isBlockingPosition(x - i, y);
+                if (isBlocking){
+                    this.addToValid(x - i, y);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (x + i < dimension){
+                let isBlocking = this.isBlockingPosition(x + i, y);
+                if (isBlocking){
+                    this.addToValid(x + i, y);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (y - i >= 0){
+                let isBlocking = this.isBlockingPosition(x, y - i);
+                if (isBlocking){
+                    this.addToValid(x, y - i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (y + i < dimension){
+                let isBlocking = this.isBlockingPosition(x, y + i);
+                if (isBlocking){
+                    this.addToValid(x, y + i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else {
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (x + i < dimension && y + i < dimension){
+                let isBlocking = this.isBlockingPosition(x + i, y + i);
+                if (isBlocking){
+                    this.addToValid(x + i, y + i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (x - i >= 0 && y - i >= 0){
+                let isBlocking = this.isBlockingPosition(x - i, y - i);
+                if (isBlocking){
+                    this.addToValid(x - i, y - i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (x + i < dimension && y - i >= 0){
+                let isBlocking = this.isBlockingPosition(x + i, y - i);
+                if (isBlocking){
+                    this.addToValid(x + i, y - i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        for (let i = 1; i < dimension; i++) {
+            if (x - i >= 0 && y + i < dimension){
+                let isBlocking = this.isBlockingPosition(x - i, y + i);
+                if (isBlocking){
+                    this.addToValid(x - i, y + i);
+                }
+                if (isBlocking === true){
+                    this.moveFromValidToPositions();
+                    this.blocking_directions++;
+                    break;
+                }
+                if (!isBlocking || i == dimension - 1){
+                    this.valid = [];
+                    break;
+                }
+            }else{
+                this.valid = [];
+                break;
+            }
+        }
+        return this.positions;
+    }
+
+    
+
+    get_possible_moves(isAttack){
         this.positions = [];
         let x = this.posX;
         let y = this.posY;
         if (x - 1 >= 0){
-            this.appendToPositions(x - 1, y);
+            this.appendToPositions(x - 1, y, isAttack);
         }
         if (x + 1 < dimension){
-            this.appendToPositions(x + 1, y);
+            this.appendToPositions(x + 1, y, isAttack);
         }
         if (y - 1 >= 0){
-            this.appendToPositions(x, y - 1);
+            this.appendToPositions(x, y - 1, isAttack);
         }
         if (y + 1 < dimension){
-            this.appendToPositions(x, y + 1);
+            this.appendToPositions(x, y + 1, isAttack);
         }
         if (y + 1 < dimension && x + 1 < dimension){
-            this.appendToPositions(x + 1, y + 1);
+            this.appendToPositions(x + 1, y + 1, isAttack);
         }
         if (y - 1 >= 0 && x - 1 >= 0){
-            this.appendToPositions(x - 1, y - 1);
+            this.appendToPositions(x - 1, y - 1, isAttack);
         }
         if (x + 1 < dimension && y - 1 >= 0){
-            this.appendToPositions(x + 1, y - 1);
+            this.appendToPositions(x + 1, y - 1, isAttack);
         }
         if (y + 1 < dimension && x - 1 >= 0){
-            this.appendToPositions(x - 1, y + 1);
+            this.appendToPositions(x - 1, y + 1, isAttack);
         }
-            
         return this.positions;
     }
 }
@@ -233,7 +434,7 @@ class Pawn extends Piece{
         return this.color+"_pawn";
     }
 
-    get_possible_moves() {
+    get_possible_moves(isAttack) {
         this.positions = [];
         let x = this.posX;
         let y = this.posY;
@@ -248,26 +449,26 @@ class Pawn extends Piece{
 
         if (this.color === "dark" && x - 1 >= 0){
             if (y - 1 >= 0){
-                this.appendCrossPosition(x - 1, y - 1);
+                this.appendCrossPosition(x - 1, y - 1, isAttack);
             }
             if (y + 1 < dimension){
-                this.appendCrossPosition(x - 1, y + 1);
+                this.appendCrossPosition(x - 1, y + 1, isAttack);
             }
         }else if (this.color === "light" && x + 1 < dimension){
             if (y - 1 >= 0){
-                this.appendCrossPosition(x + 1, y - 1);
+                this.appendCrossPosition(x + 1, y - 1, isAttack);
             }
             if (y + 1 < dimension){
-                this.appendCrossPosition(x + 1, y + 1);
+                this.appendCrossPosition(x + 1, y + 1, isAttack);
             }
         }
         return this.positions;
     }
 
-    appendCrossPosition(x, y) {
+    appendCrossPosition(x, y, isAttack) {
         let square = board.squares[x][y];
         if (square.piece && square.piece.color !== this.color){
-            this.appendToPositions(x, y);
+            this.appendToPositions(x, y, isAttack);
         }
     }
 
@@ -292,11 +493,11 @@ function renderSquare(square, posX, posY){
     return squareDiv;
 }
 
-function renderBoard(isReverse) {
+function renderBoard(isWhite) {
     let boardDiv = document.getElementById("board");
     boardDiv.innerHTML = "";
     let squares = board.squares;
-    if (!isReverse){
+    if (isWhite){
         for (let x = dimension - 1; x >= 0; x--) {
             let row = squares[x];
             for (let y = 0; y < row.length; y++) {
@@ -314,8 +515,7 @@ function renderBoard(isReverse) {
     
 }
 
-function evaluatePossiblePositions(event) {
-    let squareDiv = event.target;
+function evaluatePossiblePositions(squareDiv) {
     if (previous_click === squareDiv.id){
         previous_click = undefined;
         possible_positions = undefined;
@@ -325,11 +525,16 @@ function evaluatePossiblePositions(event) {
     }
     let [posX, posY] = squareDiv.id.split("_");
     var square = board.squares[Number(posX)][Number(posY)];
-    if (square.piece !== undefined){
+    var current_player = isWhite ? "light": "dark";
+    if (square.piece !== undefined && square.piece.color === current_player){
         squareDiv.classList.add("active");
         previous_click = squareDiv.id;
         squareClicked = true;
-        possible_positions = square.piece.get_possible_moves();
+        if (isChecked){
+            possible_positions = square.piece.positions;
+        }else{
+            possible_positions = square.piece.get_possible_moves();
+        }
         if (possible_positions && possible_positions.length>0){
             piece_movable = true;
             possible_positions.forEach(pos => {
@@ -344,51 +549,123 @@ function evaluatePossiblePositions(event) {
     }
 }
 
-function cancelMove(event) {
-    document.getElementById(previous_click).classList.remove("active");
-    possible_positions.forEach(pos => {
-        let posSquareDiv = document.getElementById(pos).querySelector("div");
-        if (posSquareDiv){
-            posSquareDiv.remove();
-        }
-    });
+function cancelMove(revertBoard) {
+    if (revertBoard){
+        document.getElementById(previous_click).classList.remove("active");
+        possible_positions.forEach(pos => {
+            let posSquareDiv = document.getElementById(pos).querySelector("div");
+            if (posSquareDiv){
+                posSquareDiv.remove();
+            }
+        });
+    }
     possible_positions = undefined;
     previous_click = undefined;
     piece_movable = false;
     squareClicked = false;
-    return;
 }
 
-function movePiece(event) {
-    let squareDiv = event.target;
-    let current_position = squareDiv.id;
+function movePiece(current_position) {
     if (possible_positions.includes(current_position)){
         let [preX, preY] = previous_click.split("_");
         let [posX, posY] = current_position.split("_");
         let temp = board.squares[preX][preY].piece;
         temp.setPosition(Number(posX), Number(posY));
+        if (temp instanceof King){
+            king_position[temp.piece_color === "light" ? 0 : 1] = current_position;
+        }
         board.squares[preX][preY] = new Square(Number(preX), Number(preY));
         board.squares[posX][posY] = new Square(Number(posX), Number(posY), temp);
-        renderBoard();
+        isWhite = !isWhite;
+        isChecked = validateIsChecked();
+        resolvePossibleMoves();
+        renderBoard(isWhite);
+        document.getElementById(previous_click).classList.add("active");
+        document.getElementById(current_position).classList.add("active");
+        cancelMove();
+        return;
     }
-    cancelMove();
+    cancelMove(true);
+}
+
+function resolvePossibleMoves(){
+    let current_color = isWhite ? 'light' : 'dark';
+    let kingPosition = king_position[isWhite ? 0 : 1].split("_");
+    let blocking_positions = board.squares[kingPosition[0]][kingPosition[1]].piece.getBlockingPositions();
+    for (let x = 0; x < dimension; x++){
+        for (let y = 0; y < dimension; y++) {
+            let piece = board.squares[x][y].piece;
+            if (piece && piece.color === current_color){
+                let valid_positions = [];
+                let attack_positions = piece.get_possible_moves(true);
+                attack_positions.forEach(function(position){
+                    if (blocking_positions.includes(position)){
+                        valid_positions.push(position);
+                    }
+                });
+                piece.positions = valid_positions;
+            }else if (piece && piece.color !== current_color){
+                let attack_positions = piece.get_possible_moves(true);
+                if (attack_positions.includes(kingPosition) && blocking_positions.includes(x+"_"+y)){
+                    blocking_positions.push(x+"_"+y);
+                    this.blocking_directions++;
+                }
+            }
+        }
+    }
+}
+
+function validateIsChecked(validate_position){
+    let current_color = isWhite ? 'light' : 'dark';
+    if (!validate_position){
+        validate_position = king_position[isWhite ? 0 : 1];
+    }
+    for (let x = 0; x < dimension; x++){
+        for (let y = 0; y < dimension; y++) {
+            let piece = board.squares[x][y].piece
+            if (piece && piece.color !== current_color){
+                let attack_positions = piece.get_possible_moves(true);
+                if (attack_positions.includes(validate_position)){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 var squareClicked = false;
 var previous_click;
 var piece_movable = false;
+var isWhite = true;
+var isChecked = false;
+var king_position = [];
 var possible_positions;
 function clickSquare(event){
+    let squareDiv = event.target;
     if (!squareClicked){
-        evaluatePossiblePositions(event)
-    }else if(piece_movable){
-        movePiece(event);
+        evaluatePossiblePositions(squareDiv);
+        return;
+    }else if (squareClicked){
+        let [preX, preY] = previous_click.split("_");
+        let [posX, posY] = squareDiv.id.split("_");
+        let square = board.squares[Number(posX)][Number(posY)];
+        let previous = board.squares[preX][preY].piece;
+        if (square.piece !== undefined && square.piece.color === previous.color){
+            cancelMove(true);
+            evaluatePossiblePositions(squareDiv);
+            return;
+        }
+    }
+    
+    if(piece_movable){
+        movePiece(squareDiv.id);
     }
 }
 
 function initBoard(){
     board = new Board();
-    renderBoard(true);
+    renderBoard(isWhite);
 }
 
 var board;
